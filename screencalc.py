@@ -1,5 +1,5 @@
-"""Helper functions to calculate diagonals for computer monitors
-"""
+"""Helper functions and classes to calculate resolution/dpi/size of screens
+with varying aspect ratios."""
 import math
 from math import sqrt
 
