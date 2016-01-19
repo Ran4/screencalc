@@ -53,10 +53,10 @@ def diag_to_ab(c, ratio):
 class Resolution(object):
     def __init__(self, x_res, y_res, diag=None, size=None):
         """
-        @param x_res resolution width
-        @param y_res resolution height
-        @param diag diagonal size in inches
-        @param size 2-tuple with size, (w, h), in cm
+        :param x_res: resolution width
+        :param y_res: resolution height
+        :param diag: diagonal size in inches
+        :param size: 2-tuple with size, (w, h), in cm
         """
         self.x = x_res
         self.y = y_res
