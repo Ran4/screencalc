@@ -63,13 +63,21 @@ class Resolution(object):
         self.diag = diag
         self.dpi = None
         self.size = None  #w, h, in mm
-        self.recalculate()
+        try:
+            self.recalculate()
+        except TypeError as e:
+            print "TypeError: '{}' on {}"\
+                    .format(e, self.__repr__())
         
     def recalculate(self):
         if self.x is not None and self.y is not None and self.diag is not None:
             self.dpi = get_dpi(self.x, self.y, self.diag)
             
         if self.x is not None and self.y is not None and self.size is None:
+            if self.diag is None: raise TypeError("self.diag is None")
+            if self.x is None: raise TypeError("self.x is None")
+            if self.y is None: raise TypeError("self.y is None")
+            
             w_in, h_in = diag_to_ab(self.diag, [self.x, self.y])
             self.size = (in_to_cm(w_in), in_to_cm(h_in))
     
@@ -134,6 +142,10 @@ def main():
     print Resolution(3840, 2160, 48)
     print Resolution(3840, 2160, 50)
     print Resolution(3840, 2160, 55)
+    print "\nUltrawides:"
+    print Resolution(2*2560, 1440, diag=50)
+    print
+    print "Custom:"
 
 def test():
     import test_screencalc
