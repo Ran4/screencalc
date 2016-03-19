@@ -143,7 +143,8 @@ def main():
     print Resolution(3840, 2160, 50)
     print Resolution(3840, 2160, 55)
     print "\nUltrawides:"
-    print Resolution(2*2560, 1440, diag=50)
+    print Resolution(3440, 1440, diag=34)
+    print Resolution(2*2560, 1440, diag=50), "(not real)"
     print
     print "Custom:"
 
