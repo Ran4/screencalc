@@ -135,6 +135,10 @@ def main():
     print Resolution(1920, 1200, 25.5)
     print Resolution(1920, 1080, 32)
     print Resolution(3840, 2160, 32)  #<3840x2160 @32", ppi=137.68>
+    x = 1440/2560.
+    print Resolution(int(3840*x), int(2160*x), 28), "4k with same scaling as 1440/2560"
+    x2 = 1680/2560.
+    print Resolution(int(3840*x2), int(2160*x2), 28), "4k with same scaling as 1680/2560"
     print "\nTv:s:"
     print Resolution(3840, 2160, 40)
     print Resolution(3840, 2160, 42)
