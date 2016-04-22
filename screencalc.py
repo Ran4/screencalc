@@ -27,12 +27,12 @@ def parse_ratio(ratio):
             ratio = ratio[0] / float(ratio[1])
     return ratio
 
-def get_dpi(x_res, y_res, diagonal):
+def get_dpi(x_res, y_res, diagonal_in):
     """diagonal is in inch!"""
     total_number_of_pixels = x_res * y_res
     ratio = x_res / float(y_res)
     
-    width, height = diag_to_ab(diagonal, ratio)
+    width, height = diag_to_ab(diagonal_in, ratio)
     total_area_in_inch = width * height
     
     dpi = math.sqrt(total_number_of_pixels / total_area_in_inch)
@@ -67,16 +67,19 @@ class Resolution(object):
             self.recalculate()
         except TypeError as e:
             print "TypeError: '{}' on {}"\
-                    .format(e, self.__repr__())
+                .format(e, self.__repr__())
         
     def recalculate(self):
         if self.x is not None and self.y is not None and self.diag is not None:
             self.dpi = get_dpi(self.x, self.y, self.diag)
             
         if self.x is not None and self.y is not None and self.size is None:
-            if self.diag is None: raise TypeError("self.diag is None")
-            if self.x is None: raise TypeError("self.x is None")
-            if self.y is None: raise TypeError("self.y is None")
+            if self.diag is None:
+                raise TypeError("self.diag is None")
+            if self.x is None:
+                raise TypeError("self.x is None")
+            if self.y is None:
+                raise TypeError("self.y is None")
             
             w_in, h_in = diag_to_ab(self.diag, [self.x, self.y])
             self.size = (in_to_cm(w_in), in_to_cm(h_in))
@@ -140,12 +143,15 @@ def main():
     print Resolution(1920, 1200, 25.5)
     print Resolution(1920, 1080, 32)
     print Resolution(3840, 2160, 32)  #<3840x2160 @32", ppi=137.68>
-    x = 1440/2560.
-    print Resolution(int(3840*x), int(2160*x), 28), "4k, with scaling as 1440/2560=0.5625"
-    print Resolution(int(3840*x), int(2160*x), 27), "4k, with scaling as 1440/2560=0.5625"
-    x2 = 1680/2560.
-    print Resolution(int(3840*x2), int(2160*x2), 28), "4k, with scaling as 1680/2560=0.65625"
-    x2 = 1680/2560.
+    x = 1440 / 2560.
+    print Resolution(int(3840 * x), int(2160 * x), 28),\
+        "4k, with scaling as 1440/2560=0.5625"
+    print Resolution(int(3840 * x), int(2160 * x), 27),\
+        "4k, with scaling as 1440/2560=0.5625"
+    x2 = 1680 / 2560.
+    print Resolution(int(3840 * x2), int(2160 * x2), 28),\
+        "4k, with scaling as 1680/2560=0.65625"
+    x2 = 1680 / 2560.
     print Resolution(3008, 1692, 28), "scaled 4k, 3008/3840=0.7833"
     print "\nTv:s:"
     print Resolution(3840, 2160, 40)
@@ -156,7 +162,7 @@ def main():
     print Resolution(3840, 2160, 55)
     print "\nUltrawides:"
     print Resolution(3440, 1440, diag=34)
-    print Resolution(2*2560, 1440, diag=50), "(not real)"
+    print Resolution(2 * 2560, 1440, diag=50), "(not real)"
     print
     print "Custom:"
     print Resolution(2560, 1600, diag=30), "custom, (not real)"

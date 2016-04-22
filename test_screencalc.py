@@ -21,10 +21,10 @@ class FunctionsTests(unittest.TestCase):
         
     def test_get_dpi(self):
         """Testing of function get_dpi"""
-        dpi = screencalc.get_dpi(x_res=1, y_res=1, diagonal=sqrt(2))
+        dpi = screencalc.get_dpi(x_res=1, y_res=1, diagonal_in=sqrt(2))
         self.assertAlmostEqual(dpi, 1)
         
-        dpi_2 = screencalc.get_dpi(x_res=100, y_res=100, diagonal=sqrt(2))
+        dpi_2 = screencalc.get_dpi(x_res=100, y_res=100, diagonal_in=sqrt(2))
         self.assertAlmostEqual(dpi_2, 100)
         
         dpi_3 = screencalc.get_dpi(1680, 1050, 22)
