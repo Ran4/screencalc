@@ -129,6 +129,11 @@ def main():
     print Resolution(1366, 768, 14.1)
     print Resolution(1600, 900, 14.1)
     print Resolution(1920, 1080, 14.1)
+    print '\nMacBook 13"'
+    print Resolution(2560, 1600, 13.3)
+    print Resolution(1280, 800, 13.3), "2x scale"
+    print Resolution(1440, 900, 13.3), "highest default max"
+    print Resolution(1680, 1050, 13.3), "second highest default max"
     print "\nScreens:"
     print Resolution(1680, 1050, 22)
     print Resolution(1920, 1080, 24)
@@ -136,9 +141,12 @@ def main():
     print Resolution(1920, 1080, 32)
     print Resolution(3840, 2160, 32)  #<3840x2160 @32", ppi=137.68>
     x = 1440/2560.
-    print Resolution(int(3840*x), int(2160*x), 28), "4k with same scaling as 1440/2560"
+    print Resolution(int(3840*x), int(2160*x), 28), "4k, with scaling as 1440/2560=0.5625"
+    print Resolution(int(3840*x), int(2160*x), 27), "4k, with scaling as 1440/2560=0.5625"
     x2 = 1680/2560.
-    print Resolution(int(3840*x2), int(2160*x2), 28), "4k with same scaling as 1680/2560"
+    print Resolution(int(3840*x2), int(2160*x2), 28), "4k, with scaling as 1680/2560=0.65625"
+    x2 = 1680/2560.
+    print Resolution(3008, 1692, 28), "scaled 4k, 3008/3840=0.7833"
     print "\nTv:s:"
     print Resolution(3840, 2160, 40)
     print Resolution(3840, 2160, 42)
@@ -151,6 +159,7 @@ def main():
     print Resolution(2*2560, 1440, diag=50), "(not real)"
     print
     print "Custom:"
+    print Resolution(2560, 1600, diag=30), "custom, (not real)"
 
 def test():
     import test_screencalc
