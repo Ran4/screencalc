@@ -1,7 +1,12 @@
 """Helper functions and classes to calculate resolution/dpi/size of screens
 with varying aspect ratios."""
+from __future__ import print_function
+from __future__ import division
+from termcolor import colored
+
 import math
 from math import sqrt
+import re
 
 
 def get_diag(a, b):
@@ -50,6 +55,74 @@ def diag_to_ab(c, ratio):
     a = b * ratio
     return (a, b)
 
+def _gt_colorize(xy_str, diag_str, dpi_str, size_str,
+        resolution1, resolution2,
+        color_better="green", color_worse="red"):
+    """Analyses the two values of the lists xy_str, diag_str, dpi_str
+    and size_str, colorizing them with colored() depending on
+    pixel count et.c.
+    """
+    def recolor_array(arr, index, color):
+        arr[index] = colored(arr[index], color)
+        
+    num_pixels = resolution1.x * resolution1.y
+    num_pixels_other = resolution2.x * resolution2.y
+        
+    #Recoloring xy_str
+    if num_pixels > num_pixels_other:
+        recolor_array(xy_str, 0, color_better)
+        recolor_array(xy_str, 1, color_worse)
+    elif num_pixels < num_pixels_other:
+        recolor_array(xy_str, 1, color_better)
+        recolor_array(xy_str, 0, color_worse)
+    else:
+        pass #no need to change colors
+    
+    #Recoloring diag_str
+    if resolution1.diag > resolution2.diag:
+        recolor_array(diag_str, 0, color_better)
+        recolor_array(diag_str, 1, color_worse)
+    elif resolution1.diag < resolution2.diag:
+        recolor_array(diag_str, 0, color_worse)
+        recolor_array(diag_str, 1, color_better)
+        
+    #Recoloring dpi_str
+    if all(dpi_str): #only recolor if both has dpi
+        if resolution1.dpi > resolution2.dpi:
+            recolor_array(dpi_str, 0, color_better)
+            recolor_array(dpi_str, 1, color_worse)
+        elif resolution1.dpi < resolution2.dpi:
+            recolor_array(dpi_str, 0, color_worse)
+            recolor_array(dpi_str, 1, color_better)
+            
+    #Recoloring size_str
+    if all(size_str): #only recolor if both has size
+        X, Y = 0, 1
+        
+        size = []
+        for i in [X, Y]:
+            if resolution1.size[i] > resolution2.size[i]:
+                size.append([
+                    colored(str(resolution1.size[i]), color_better),
+                    colored(str(resolution2.size[i]), color_worse)])
+            elif resolution1.size[i] < resolution2.size[i]:
+                size.append([
+                    colored(str(resolution1.size[i]), color_better),
+                    colored(str(resolution2.size[i]), color_worse)])
+            else:
+                size.append([
+                    str(resolution1.size[i]),
+                    str(resolution2.size[i])])
+        
+                size_str = [size[0:2], size[2:4]]
+        
+        if resolution1.size > resolution2.size:
+            recolor_array(size_str, 0, color_better)
+            recolor_array(size_str, 1, color_worse)
+        elif resolution1.size < resolution2.size:
+            recolor_array(size_str, 0, color_worse)
+            recolor_array(size_str, 1, color_better)
+
 class Resolution(object):
     def __init__(self, x_res, y_res, diag=None, size=None):
         """
@@ -66,8 +139,55 @@ class Resolution(object):
         try:
             self.recalculate()
         except TypeError as e:
-            print "TypeError: '{}' on {}"\
-                .format(e, self.__repr__())
+            print("TypeError: '{}' on {}"\
+                .format(e, self.__repr__()))
+            
+    def __gt__(self, other):
+        """resolution1 > resolution2 returns a string showing where
+        they differ.
+        
+        
+        >>> x220_res =   screencalc.Resolution(1366, 768, 12.5)
+        >>> l412_res =   screencalc.Resolution(1366, 768, 14.1)
+        >>> x220_res / l412_res
+        "<1920x1080 @24", ppi=91.79, size=531*299>"
+        "<1920x1080 @24", ppi=91.79, size=531*299>"
+        """
+        def _get_xy_diag_dpi_size_str(resolution):
+            xy_str = "{0.x}x{0.y}".format(resolution)
+            diag_str = ""
+            dpi_str = ""
+            size_str = ""
+        
+            if resolution.diag is not None:
+                diag_str = ' @{0.diag}"'.format(resolution)
+                if resolution.dpi is not None:
+                    dpi_str = ", ppi={0.dpi:.2f}".format(resolution)
+                    
+                if resolution.size is not None:
+                    size_str = ", size={w:.0f}*{h:.0f}".format(
+                        w=resolution.size[0] * 10, h=resolution.size[1] * 10)
+                    
+            return xy_str, diag_str, dpi_str, size_str
+        
+        xy_str = []
+        diag_str = []
+        dpi_str = []
+        size_str = []
+        for i, resolution in enumerate([self, other]):
+            xy_str_temp, diag_str_temp, dpi_str_temp, size_str_temp = \
+                _get_xy_diag_dpi_size_str(resolution)
+            xy_str.append(xy_str_temp)
+            diag_str.append(diag_str_temp)
+            dpi_str.append(dpi_str_temp)
+            size_str.append(size_str_temp)
+        
+        _gt_colorize(xy_str, diag_str, dpi_str, size_str, self, other)
+
+        diff_strings = ['<{}{}{}{}>'.format(
+                xy_str[i], diag_str[i], dpi_str[i], size_str[i])
+            for i, resolution in enumerate([self, other])]
+        return "\n".join(diff_strings)
         
     def recalculate(self):
         if self.x is not None and self.y is not None and self.diag is not None:
@@ -109,6 +229,101 @@ class Resolution(object):
                 self, dpi_str=dpi_str, size_str=size_str)
         else:
             return '<{0.x}x{0.y}>'.format(self)
+        
+        
+def _guess_diag_from_string(s, verbose=False):
+    
+    # e.g.
+    # 24" -> 24
+    # 40' -> 40
+    diag_guesses_symbol = re.findall(r'\d+["\']', s)
+    if diag_guesses_symbol:
+        diag_guess = diag_guesses_symbol[0]
+        diag = int(re.findall(r'\d+', diag_guess)[0])
+        if verbose:
+            print("Guessing that >{}< means {} inches diagonal".format(
+                diag_guess, diag))
+        return diag
+    
+    # e.g.
+    # 30 inch -> 30
+    # 30  inches -> 30
+    diag_guesses_inch = re.findall(r'\d+[\.\d+]*? inch', s)
+    if diag_guesses_inch:
+        diag_guess_inch = diag_guesses_inch[0]
+        diag = float(re.findall(r'\d+[\.\d+]*', diag_guess_inch)[0])
+        if verbose:
+            print("Guessing that >{}< means {} inches diagonal".format(
+                diag_guess_inch, diag))
+        
+        return diag
+
+def _guess_size_from_string(s, verbose=False):
+    size = None
+    return size
+
+def _guess_resolution_from_string(s, verbose=False):
+    res_guesses = re.findall(r'\d{3,}[x\*]\d{3,}', s)
+    if res_guesses:
+        res_guess = res_guesses[0]
+        
+        res_list = re.findall(r'\d{3,}', res_guess)
+        if res_list and len(res_list) >= 2:
+            x_res, y_res = map(int, res_list[:2])
+            if verbose:
+                print("Guessing that >{}< means resolution {}x{}".format(
+                    res_guess, x_res, y_res))
+            return x_res, y_res
+        else:
+            if verbose:
+                print("Problem guessing what >{}< means!".format(res_guess))
+            return None, None
+
+    x_res, y_res = None, None
+    if re.findall(r'4k', s):
+        x_res, y_res = (3840, 2160)
+    
+    if re.findall(r'1080p', s):
+        x_res, y_res = (1920, 1080)
+    
+    if re.findall(r'1200p', s):
+        x_res, y_res = (1920, 1200)
+        
+    if verbose and x_res and y_res:
+        print("Guessing that >{}< includes resolution={}x{}".format(
+            s, x_res, y_res))
+
+    return x_res, y_res
+
+def guess_resolution_from_string(string, verbose=False):
+    """Takes a string and tries to generate a Resolution from it.
+    Example of strings that work:
+    '24" 1920x1080'
+    '24" 1920*1080'
+    '24 inch 4k'
+    
+    If verbose is True, print intermediate steps
+    """
+    x_res, y_res = _guess_resolution_from_string(string, verbose)
+    diag = _guess_diag_from_string(string, verbose)
+    size = _guess_size_from_string(string, verbose)
+    
+    if verbose:
+        descr_list = []
+        if x_res and y_res:
+            descr_list.append("res={}x{}".format(x_res, y_res))
+        if diag is not None:
+            descr_list.append("diag={}".format(diag))
+        if size is not None:
+            descr_list.append("size={}".format(size))
+            
+        print("Creating resolution using {} from string '{}'".format(
+            ", ".join(descr_list), string))
+    resolution = Resolution(x_res, y_res, diag, size)
+    return resolution
+
+#~ guess_resolution_from_string('24" 1920x1080', verbose=True)
+#~ exit()
 
 def main():
     """See if 13.5" 3:2 Surface book has a greater height than 14.1" 16:9
@@ -116,56 +331,60 @@ def main():
     
     w_thinkpad, h_thinkpad = diag_to_ab(14.1, [16, 9])
     
-    print "h_surface: %s, h_thinkpad: %s" % (h_surface, h_thinkpad)
-    print "h_surface/h_thinkpad: %s" % (h_surface / h_thinkpad)
-    print
-    print "w_surface: %s, w_thinkpad: %s" % (w_surface, w_thinkpad)
-    print "w_surface/w_thinkpad: %s" % (w_surface / w_thinkpad)
+    print("h_surface: %s, h_thinkpad: %s" % (h_surface, h_thinkpad))
+    print("h_surface/h_thinkpad: %s" % (h_surface / h_thinkpad))
+    print()
+    print("w_surface: %s, w_thinkpad: %s" % (w_surface, w_thinkpad))
+    print("w_surface/w_thinkpad: %s" % (w_surface / w_thinkpad))
     """
     
-    lg = Resolution(3840, 2160, 40)
-    print lg
-    
-    # _4k = Resolution(3840, 2160, 32)
-    print "Laptops:"
-    print Resolution(1366, 768, 12.5)
-    print Resolution(1366, 768, 14.1)
-    print Resolution(1600, 900, 14.1)
-    print Resolution(1920, 1080, 14.1)
-    print '\nMacBook 13"'
-    print Resolution(2560, 1600, 13.3)
-    print Resolution(1280, 800, 13.3), "2x scale"
-    print Resolution(1440, 900, 13.3), "highest default max"
-    print Resolution(1680, 1050, 13.3), "second highest default max"
-    print "\nScreens:"
-    print Resolution(1680, 1050, 22)
-    print Resolution(1920, 1080, 24)
-    print Resolution(1920, 1200, 25.5)
-    print Resolution(1920, 1080, 32)
-    print Resolution(3840, 2160, 32)  #<3840x2160 @32", ppi=137.68>
+    print("Laptops:")
+    print(Resolution(1366, 768, 12.5))
+    print(Resolution(1366, 768, 14.1))
+    print(Resolution(1600, 900, 14.1))
+    print(Resolution(1920, 1080, 14.1))
+    print('\nMacBook 13"')
+    print(Resolution(2560, 1600, 13.3))
+    print(Resolution(1280, 800, 13.3), "2x scale")
+    print(Resolution(1440, 900, 13.3), "highest default max")
+    print(Resolution(1560, 975, 13.3), "Custom, between two highest")
+    print(Resolution(1680, 1050, 13.3), "second highest default max")
+    print("\nScreens:")
+    print(Resolution(1680, 1050, 22))
+    print(Resolution(1920, 1080, 24))
+    print(Resolution(1920, 1200, 25.5))
+    print(Resolution(1920, 1080, 32))
+    print(Resolution(3840, 2160, 32))  #<3840x2160 @32", ppi=137.68>
     x = 1440 / 2560.
-    print Resolution(int(3840 * x), int(2160 * x), 28),\
-        "4k, with scaling as 1440/2560=0.5625"
-    print Resolution(int(3840 * x), int(2160 * x), 27),\
-        "4k, with scaling as 1440/2560=0.5625"
+    print(Resolution(int(3840 * x), int(2160 * x), 28),\
+        "4k, with scaling as 1440/2560=0.5625")
+    print(Resolution(int(3840 * x), int(2160 * x), 27),\
+        "4k, with scaling as 1440/2560=0.5625")
     x2 = 1680 / 2560.
-    print Resolution(int(3840 * x2), int(2160 * x2), 28),\
-        "4k, with scaling as 1680/2560=0.65625"
+    print(Resolution(int(3840 * x2), int(2160 * x2), 28),\
+        "4k, with scaling as 1680/2560=0.65625")
     x2 = 1680 / 2560.
-    print Resolution(3008, 1692, 28), "scaled 4k, 3008/3840=0.7833"
-    print "\nTv:s:"
-    print Resolution(3840, 2160, 40)
-    print Resolution(3840, 2160, 42)
-    print Resolution(3840, 2160, 43)
-    print Resolution(3840, 2160, 48)
-    print Resolution(3840, 2160, 50)
-    print Resolution(3840, 2160, 55)
-    print "\nUltrawides:"
-    print Resolution(3440, 1440, diag=34)
-    print Resolution(2 * 2560, 1440, diag=50), "(not real)"
-    print
-    print "Custom:"
-    print Resolution(2560, 1600, diag=30), "custom, (not real)"
+    print(Resolution(3008, 1692, 28), "scaled 4k, 3008/3840=0.7833")
+    print("\nTv:s:")
+    print(Resolution(3840, 2160, 40))
+    print(Resolution(3840, 2160, 42))
+    print(Resolution(3840, 2160, 43))
+    print(Resolution(3840, 2160, 48))
+    print(Resolution(3840, 2160, 50))
+    print(Resolution(3840, 2160, 55))
+    print("\nUltrawides:")
+    print(Resolution(3440, 1440, diag=34))
+    print(Resolution(2 * 2560, 1440, diag=50), "(not real)")
+    print()
+    print("Custom:")
+    print(Resolution(2560, 1600, diag=30), "custom, (not real)")
+    print(Resolution(1440, 900, diag=14.1))
+    print()
+    print("4k (3840x2160) at different sizes:")
+    for size in range(30, 51):
+        if size in [31,33,34,35,36,37,38]: # Only print sizes that exist
+            continue
+        print(Resolution(3840, 2160, diag=size))
 
 def test():
     import test_screencalc
