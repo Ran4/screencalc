@@ -6,6 +6,8 @@ import math
 
 import screencalc
 from screencalc import Resolution
+import resolutionguessing
+from resolutionguessing import guess_resolution_from_string
 
 class FunctionsTests(unittest.TestCase):
     """Tests the standalone functions in screencalc
@@ -74,7 +76,7 @@ class GuessResolutionFromStringTests(unittest.TestCase):
             ("22.3 inch", 22.3), ("2.4 inch", 2.4), ("400.5 inch", 400.5),
             ("22.3 inches", 22.3), ("2.4 inches", 2.4), ("400.5 inches", 400.5)
             ]:
-            self.assertEqual(screencalc._guess_diag_from_string(fr), to)
+            self.assertEqual(resolutionguessing._guess_diag_from_string(fr), to)
             
             
     def _assert_res_has_diag_x_y_size(self, res, diag, x, y, size):
@@ -87,19 +89,19 @@ class GuessResolutionFromStringTests(unittest.TestCase):
             
     def test_functionally(self):
         self._assert_res_has_diag_x_y_size(
-            res=screencalc.guess_resolution_from_string('24" 1920x1080'),
+            res=guess_resolution_from_string('24" 1920x1080'),
             diag=24, x=1920, y=1080, size=None)
         
         self._assert_res_has_diag_x_y_size(
-            res=screencalc.guess_resolution_from_string('24" 1920*1080'),
+            res=guess_resolution_from_string('24" 1920*1080'),
             diag=24, x=1920, y=1080, size=None)
         
         self._assert_res_has_diag_x_y_size(
-            res=screencalc.guess_resolution_from_string('40" 4k'),
+            res=guess_resolution_from_string('40" 4k'),
             diag=40, x=3840, y=2160, size=None)
         
         self._assert_res_has_diag_x_y_size(
-            res=screencalc.guess_resolution_from_string('32" 1080p'),
+            res=guess_resolution_from_string('32" 1080p'),
             diag=32, x=1920, y=1080, size=None)
         
 def main():
