@@ -229,9 +229,6 @@ class Resolution(object):
         else:
             return '<{0.x}x{0.y}>'.format(self)
 
-#~ guess_resolution_from_string('24" 1920x1080', verbose=True)
-#~ exit()
-
 def main():
     """See if 13.5" 3:2 Surface book has a greater height than 14.1" 16:9
     w_surface, h_surface = diag_to_ab(13.5, [3, 2])
@@ -308,10 +305,5 @@ def main():
             continue
         print(Resolution(3840, 2160, diag=size))
 
-def test():
-    import test_screencalc
-    test_screencalc.main()
-    
 if __name__ == "__main__":
-    # test()
     main()

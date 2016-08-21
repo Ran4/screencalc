@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 import re
+import sys
+import argparse
 
 from screencalc import Resolution
 
-def _guess_diag_from_string(s, verbose=False):
-    
+DESCRIPTION = """Command-line parser for screencalc, allowing you to calculate
+resolution/dpi/size of screens of varying aspect ratios"""
+
+def _guess_diag_from_string(string, verbose=False):
+    """Tries to find information about the diagonal size (the diag parameter
+    in the Resolution class) from the input string"""
     # e.g.
     # 24" -> 24
     # 40' -> 40
-    diag_guesses_symbol = re.findall(r'\d+["\']', s)
+    diag_guesses_symbol = re.findall(r'\d+["\']', string)
     if diag_guesses_symbol:
         diag_guess = diag_guesses_symbol[0]
         diag = int(re.findall(r'\d+', diag_guess)[0])
@@ -20,7 +26,7 @@ def _guess_diag_from_string(s, verbose=False):
     # e.g.
     # 30 inch -> 30
     # 30  inches -> 30
-    diag_guesses_inch = re.findall(r'\d+[\.\d+]*? inch', s)
+    diag_guesses_inch = re.findall(r'\d+[\.\d+]*? inch', string)
     if diag_guesses_inch:
         diag_guess_inch = diag_guesses_inch[0]
         diag = float(re.findall(r'\d+[\.\d+]*', diag_guess_inch)[0])
@@ -30,11 +36,16 @@ def _guess_diag_from_string(s, verbose=False):
         
         return diag
 
-def _guess_size_from_string(s, verbose=False):
+def _guess_size_from_string(string, verbose=False):
     size = None
     return size
 
 def _guess_resolution_from_string(s, verbose=False):
+    """Tries to find information about the x and y resolution (the x and y
+    parameter in the Resolution class) from the input string.
+    
+    Returns a tuple of guessed x and y values, any of which might be None
+    """
     res_guesses = re.findall(r'\d{3,}[x\*]\d{3,}', s)
     if res_guesses:
         res_guess = res_guesses[0]
@@ -94,10 +105,28 @@ def guess_resolution_from_string(string, verbose=False):
     resolution = Resolution(x_res, y_res, diag, size)
     return resolution
 
-#Shortcuts
-g = guess_resolution_from_string
-
 def prompt():
     return guess_resolution_from_string(input("? "))
 
-p = prompt
+def get_command_line_parser():
+    parser = argparse.ArgumentParser(
+        description=DESCRIPTION)
+    parser.add_argument("strings_to_parse", nargs="*",
+        help="""One or more strings to be parsed, e.g. '24 inch 1080p'""")
+
+    return parser
+
+def handle_command_line_using_argparse():
+    parser = get_command_line_parser()
+    arg_namespace = parser.parse_args()
+    
+    for string_to_parse in arg_namespace.strings_to_parse:
+        guessed_string = guess_resolution_from_string(string_to_parse)
+        print(guessed_string)
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        while True:
+            print(prompt())
+    else:
+        handle_command_line_using_argparse()
