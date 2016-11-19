@@ -291,6 +291,7 @@ def main():
     print(Resolution(3840, 2160, 48))
     print(Resolution(3840, 2160, 50))
     print(Resolution(3840, 2160, 55))
+    print(Resolution(3008, 1692, 43), "scaled 4k, 3008/3840=0.7833")
     print("\nUltrawides:")
     print(Resolution(3440, 1440, diag=34))
     print(Resolution(3840, 1600, diag=38))
